@@ -52,20 +52,27 @@ def root():
 
 @app.get("/sqlalchemy")
 def test_posts(db: Session = Depends(get_db)):
-    return{"status": "success"}
+
+    posts = db.query(models.Post)
+    print(posts)
+    return {"data":"successfull"}
+
 
 @app.get("/posts")
 def get_posts():
-    cursor.execute(""" SELECT * FROM posts""")
-    Post = cursor.fetchall
+    # cursor.execute(""" SELECT * FROM posts""")
+    # Post = cursor.fetchall()
+    post = db.query(models.Post).all()
     return {"data": post}
 
 # Create a new post
 @app.post("/posts",status_code=status.HTTP_201_CREATED)
-def create_post(post: Post):
-    cursor.execute(""" INSERT INTO posts (title, content,published) VALUES (%S,%S,%S) RETURNING * """,(post.title,post.content,post.published))
-    new_post = cursor.fetchone()
-    conn.commit()
+def create_post(post: Post,db: Session = Depends(get_db)):
+    # cursor.execute(""" INSERT INTO posts (title, content,published) VALUES (%S,%S,%S) RETURNING * """,(post.title,post.content,post.published))
+    # new_post = cursor.fetchone()
+    # conn.commit()
+
+    new_post = models.Post(title=post.title,content=post.content,published=post.published)
     return {"data": get_post}
 
   
