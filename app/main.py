@@ -8,6 +8,8 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
 from sqlalchemy.orm import Session
+
+from app import schemas
 from . import models
 from .database import engine,get_db
 
@@ -50,15 +52,15 @@ def find_index_post(id):
 def root():
     return {"message": "Hello World"}
 
-@app.get("/posts")
+@app.get("/posts",,response_model=[schemas.Post])
 def get_posts():
     # cursor.execute(""" SELECT * FROM posts""")
     # Post = cursor.fetchall()
-    post = db.query(models.Post).all()
+    post = db.query(models.Post).all() # type: ignore
     return  post
 
 # Create a new post
-@app.post("/posts",status_code=status.HTTP_201_CREATED)
+@app.post("/posts",status_code=status.HTTP_201_CREATED,response_model=schemas.Post)
 def create_post(post:schemas.PostCreate,db: Session = Depends(get_db)):
     # cursor.execute(""" INSERT INTO posts (title, content,published) VALUES (%S,%S,%S) RETURNING * """,(post.title,post.content,post.published))
     # new_post = cursor.fetchone()
@@ -73,7 +75,7 @@ def create_post(post:schemas.PostCreate,db: Session = Depends(get_db)):
   
 
 # Get a specific post by ID
-@app.get("/posts/{id}")
+@app.get("/posts/{id}",response_model=schemas.Post)
 def get_post(id: int ,db: Session = Depends(get_db)):
     # cursor.execute(""" SELECT * from posts WHERE id = %s """,(str(id)))
     # post = cursor.fetchone()
@@ -93,12 +95,26 @@ def delete_post(id:int,  update_post:schemas.PostCreate, db: Session = Depends(g
     #    deleted_post = cursor.fetchone()
     #    conn.commit()
     post =  db.query(models.Post).filter(models.Post.id == id) 
+    post = post_query.first (# type: ignore
 
-    if post.first() == None:
+  if post.first() == None:
          raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"post with id:{id} dose not exist")
-    post_query.update(update_post.dict(),synchronize_session+False)
+    post_query.update(update_post.dict(),synchronize_session=False) # type: ignore
 
     db.commit()
-    return post_query.first()
+  return Response(status_code=status.HTTP_204_NO_CONTENT) # type: ignore
 
 
+@app.put("/posts/{id}",response_model=schemas.Post)
+def updated_post(id:int,updated_post:schemas.PostCreate,db:Session = Depends(get_db)):
+
+
+post = db.query(models.Post).filter(models.Post.id == id)
+    
+post = post_qury.first()
+if post == None:
+      raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"post with id:{id} does not exist")
+post_qury.update(update_post.dict(),synchronize_session=False)
+db.commit()
+
+return post_query.first()
