@@ -1,57 +1,31 @@
-from typing import Optional, List
-from fastapi import FastAPI,Response,status,HTTPException,Depends
-from fastapi.params import Body
-from pydantic import BaseModel
-from random import randrange
-import psycopg2
-from psycopg2.extras import RealDictCursor
-import time
-from sqlalchemy.orm import Session
-from sqlalchemy.sql.Function import mode 
-from . import models,schemas,utils
-from .database import engine,get_db
+from fastapi import FastAPI
+from . import models
+from .database import engine
+from .routes import post, user, auth, vote
+from .config import settings
+from fastapi.middleware.cors import CORSMiddleware
 
 
 
 
-
-models .Base.metadata.create_all(bind=engine)
+# models.Base.metadata.create_all(bind=engine)
+origins = ["*"]
 
 app = FastAPI()
 
-class Post(BaseModel):
-    title: str
-    content: str
-    published: bool = True
-    
-try:
-    conn = psycopg2. connect(host ='localhost',database= 'fastapi',user='fastapi',password='newpassword', cursor_factory=RealDictCursor)
-    cursor = conn.cursor()
-    print("database connection was succesfull !")
-except Exception as error:
-        print("Connecting to database failed")
-        print("error:", error)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
+app.include_router(post.router)
+app.include_router(user.router)
+app.include_router(auth.router)
+app.include_router(vote.router)
 
-# In-memory data store
-my_posts = [
-    {"title": "Title of Post 1", "content": "Content of Post 1", "id": 1},
-    {"title": "Favorite Foods", "content": "I like pizza", "id": 2}]
-
-def find_post(id):
-    for p in my_posts:
-        if p["id"] == id:
-            return p
-        
-def find_index_post(id):
-    for i, p in enumerate(my_posts):
-        if p['id'] == id:
-            return i
-
-
-# Root endpoint
 @app.get("/")
 def root():
     return {"message": "Hello World"}
- 
-
