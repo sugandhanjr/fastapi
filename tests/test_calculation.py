@@ -1,5 +1,5 @@
 import pytest
-from app.calculations import add, subtract, multiply, divide, BankAccount,InsufficientFunds
+from app.calculations import add, subtract, multiply, divide, BankAccount,InsufficientFunds # type: ignore
 
 @pytest.fixture
 def zero_bank_account():
